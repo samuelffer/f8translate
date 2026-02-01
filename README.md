@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="assets/logo.png" alt="F8 Translate Logo" width="180">
+  <img src="assets/logo_1.png" alt="F8 Translate Logo" width="180">
 </p>
 
 
-# f8translate
+# F8 Translate
 A simple Python tool that translates selected text instantly using a global hotkey (F8).
 
 F8 Translate é uma ferramenta simples de tradução instantânea por atalho de teclado.
