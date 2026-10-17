@@ -1,5 +1,7 @@
 # Preparar seu PC Windows
 
+**Quer apenas usar/testar?** Não precisa instalar ferramentas de desenvolvimento. Baixe um artefato do Actions: `portable` funciona sem instalar .NET; `compact` exige apenas **Desktop Runtime 10 x64** uma vez. O SDK abaixo só é necessário para editar/compilar localmente.
+
 ## 1. Instale as ferramentas
 
 Use Windows 10/11 compatível com .NET 10, atualizado, e instale:
@@ -52,6 +54,8 @@ Arquivos principais:
 - `Native.cs`: atalhos e integração com o Windows.
 - `TranslationService.cs`: chamada ao provedor online.
 - `Settings.cs`: configurações locais.
+- `SelectionWatcher.cs`: observação local de seleções, em thread separada.
+- `SuggestionPopup.cs`: sugestão temporária que não rouba foco.
 
 ## 4. Teste manual antes de distribuir
 
@@ -74,28 +78,53 @@ Use texto descartável no Bloco de Notas, nunca um documento importante.
 - [ ] Pause pela bandeja; o atalho deixa de atuar. Despause e teste novamente.
 - [ ] Feche pelo X, reabra pela bandeja e finalize por Sair.
 - [ ] Reabra: idiomas/atalho/consentimento persistem; substituição volta desativada.
-- [ ] Teste a distribuição em outro PC sem SDK instalado.
+- [ ] Teste `compact` em PC com Desktop Runtime 10, mas sem SDK.
+- [ ] Teste `portable` em PC sem SDK e sem Runtime instalado.
+- [ ] Sem consentimento, selecionar texto não mostra sugestões nem gera requisições.
+- [ ] Configure Inglês → Português, autorize e ative sugestões. Selecione uma frase no Bloco de Notas e em um navegador: em aplicativos compatíveis, um botão aparece sem roubar foco.
+- [ ] Clicar na sugestão mostra o resultado, sem tocar no documento ou clipboard, mesmo com substituição marcada.
+- [ ] Feche a janela pelo X e repita a seleção: o app continua ativo.
+- [ ] Selecione em campo de senha: não deve aparecer sugestão.
+- [ ] Desmarque sugestões: elas param imediatamente. Atalho continua funcionando.
+- [ ] Pause na bandeja: nem sugestões nem atalho atuam. Retome e teste.
+- [ ] Mude a seleção/janela, dispense o botão e espere oito segundos: ele não deve ficar preso na tela nem reaparecer repetidamente para a mesma seleção.
+- [ ] Confira layout em 100%, 150% e 200% de escala, inclusive em monitores diferentes.
+- [ ] Mantenha o app aberto por alguns minutos e observe CPU/memória; provedores de acessibilidade lentos não devem bloquear a interface.
 
-Não há suíte automatizada de testes nesta primeira versão. O workflow faz build/publicação, mas não verifica interação de desktop nem disponibilidade/qualidade da API.
+O script de exportação tem testes automatizados (`python -m unittest discover -s scripts/tests`). O workflow compila e publica o aplicativo, mas não verifica interação de desktop nem disponibilidade/qualidade da API. Não há testes automatizados de interface nesta versão.
 
 ## 5. Gere o executável
 
-Para Windows x64:
+**Compacto** — requer .NET Desktop Runtime 10 x64 instalado no PC do usuário:
 
 ```powershell
-dotnet publish src/F8Translate/F8Translate.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o artifacts/win-x64
+dotnet publish src/F8Translate/F8Translate.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o artifacts/compact
 ```
 
-Abra `artifacts\win-x64\F8Translate.exe`. Distribua essa pasta em ZIP após testar. O `.pdb`, se gerado, contém símbolos de depuração e não é necessário ao usuário final. Para ARM64, troque `win-x64` por `win-arm64` e use outra pasta de saída.
+**Portátil comprimido** — inclui o runtime, não exige instalação separada:
 
-O executável inclui o runtime e pode ser maior do que você espera. Componentes nativos podem ser extraídos temporariamente pelo .NET ao abrir. Isso não é um instalador/MSI.
+```powershell
+dotnet publish src/F8Translate/F8Translate.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o artifacts/portable
+```
+
+O arquivo principal é `F8Translate.exe` dentro da pasta escolhida. Distribua a pasta completa, com as instruções correspondentes de `docs/PACOTE-*.txt`. Para ARM64, troque `win-x64` por `win-arm64` e use outra pasta de saída. Os pacotes do Actions são apenas x64.
+
+Não habilite trimming/NativeAOT: Windows Forms/UI Automation dependem de recursos que exigem cuidado e não são um alvo apropriado para uma simples troca de flags. A versão compacta economiza repetição do runtime; a portátil comprimida economiza transferência, mas extrai componentes e pode demorar mais no início. Não é instalador/MSI. Símbolos de depuração não são publicados.
 
 O SmartScreen pode alertar porque o aplicativo é novo e não tem assinatura. Não instrua usuários a desativar o antivírus; antes de distribuir amplamente, planeje assinatura de código, uma release verificável e testes em máquina limpa.
+
+## 6. Downloads temporários no GitHub
+
+O workflow publica compacto, portátil e fontes com validade de **7 dias**. Não commite ZIPs nem executáveis. Para uma entrega só de documentação, que não dispara o build, use **Actions → Build Windows → Run workflow** na branch da sessão se precisar de novos pacotes.
+
+Mudanças de código/empacotamento disparam build. Execuções anteriores da mesma branch são canceladas e cada job tem timeout de dez minutos. Não há cache nem agendamento. O arquivo já baixado não expira no PC. Essas medidas reduzem uso, mas limites/cobrança da conta precisam ser conferidos nas configurações do GitHub; não há garantia de uso infinito.
 
 ## Problemas comuns
 
 - **F8 não funciona:** confira consentimento, clique em Salvar e ativar, verifique se está pausado e teste outro atalho. Alguns teclados exigem Fn+F8.
 - **Não copia/cola em determinado programa:** teste no Bloco de Notas. Programas elevados ou que interceptam atalhos podem bloquear a automação.
+- **Sugestão não aparece:** confirme consentimento e sugestões ativados e salvos, selecione um trecho curto e aguarde. Não há suporte universal; use F8 como alternativa. A origem é configurada, não detectada.
+- **Compacto pede .NET:** instale Desktop Runtime 10 x64 ou escolha o pacote portátil.
 - **Clipboard ocupado:** feche ferramentas de clipboard conflitantes e tente novamente.
 - **Tradução recusada:** verifique internet, tamanho do trecho e cotas do MyMemory.
 - **Quero zerar configurações:** saia pela bandeja e exclua `%LOCALAPPDATA%\F8Translate\settings.json`.

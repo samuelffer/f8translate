@@ -4,7 +4,8 @@ on:
   push:
     paths:
       - 'src/**'
-      - 'scripts/build_zip.py'
+      - 'scripts/**'
+      - 'docs/PACOTE-*.txt'
       - '.github/workflows/build.yml'
   workflow_dispatch:
 
@@ -21,10 +22,12 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-dotnet@v6.0.0
         with:
           dotnet-version: '10.0.x'
+      - name: Verificar exportação de fontes
+        run: python -m unittest discover -s scripts/tests
       - name: Build
         run: dotnet build src/F8Translate/F8Translate.csproj -c Release
       - name: Publicar versão compacta (requer Desktop Runtime 10)
@@ -51,20 +54,20 @@ jobs:
           }
           $rows += @('', 'Downloads expiram em 7 dias. Compacto requer .NET Desktop Runtime 10 x64; portátil inclui o runtime. Build não substitui teste manual em Windows.')
           $rows | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: F8Translate-compact-win-x64
           path: artifacts/compact/
           retention-days: 7
           if-no-files-found: error
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: F8Translate-portable-win-x64
           path: artifacts/portable/
           retention-days: 7
           compression-level: 0
           if-no-files-found: error
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: F8Translate-fontes
           path: artifacts/sources/
