@@ -9,7 +9,7 @@ F8 Translate: C# / .NET 10 / Windows Forms, exclusivo para Windows. UI Automatio
 - `src/F8Translate/`: aplicativo.
 - `docs/DESENVOLVIMENTO.md`: preparar Windows, executar, testar e publicar.
 - `scripts/build_zip.py`: exportar fontes completos (Python padrão, apenas para o mantenedor/CI).
-- `.github/workflows/build.yml`: publicar compacto, portátil e fontes, com retenção de 7 dias.
+- `.github/workflows/build.yml`: publicar compacto, portátil e fontes, com retenção de 7 dias e limpeza de pacotes anteriores da mesma branch/workflow.
 
 ## Fluxo obrigatório de entrega
 
@@ -37,7 +37,7 @@ Este fluxo substitui o combinado antigo de commitar ZIPs: agora todos os pacotes
 
 Use `retention-days: 7`, limite de tempo, cancelamento de execuções antigas e apenas runners hospedados padrão. Não adicione caches grandes, tarefas agendadas ou pipelines desnecessários. Não abra PR, faça merge, crie release ou envie para `main` sem pedido explícito. O usuário copia manualmente os fontes para a main, sem a pasta `zips/`.
 
-Retenção reduz acúmulo, mas não garante uso ilimitado nem controla a cobrança da conta. Não altere permissões ou orçamento da conta sem autorização. Artefatos já existentes podem exigir limpeza própria; nunca apague releases ou arquivos do usuário por engano.
+Retenção reduz acúmulo, mas não garante uso ilimitado nem controla a cobrança da conta. Não altere permissões ou orçamento da conta sem autorização. O job isolado de limpeza tem apenas contents:read e actions:write, valida os três pacotes atuais antes de apagar os antigos e não pode apagar outros workflows/branches. Falhas de permissão devem ser informadas; nunca apague releases ou arquivos do usuário por engano.
 
 ## Distribuição
 

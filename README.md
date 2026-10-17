@@ -66,9 +66,10 @@ Veja o [guia para Windows](docs/DESENVOLVIMENTO.md), com instalação do SDK, co
 ## GitHub Actions e armazenamento
 
 - Executa em alterações de código/empacotamento ou manualmente, não em toda edição de documentação.
-- Uma execução nova cancela a anterior da mesma branch; cada job tem limite de dez minutos.
+- Uma execução nova cancela a anterior da mesma branch; o build tem limite de dez minutos e a limpeza de dois minutos.
 - Sem cache de dependências, sem tarefas periódicas e sem builds duplicados em PR.
 - Pacotes de fontes e executáveis são artefatos com retenção de sete dias; não entram no histórico Git.
+- Após publicar os três pacotes novos, um job isolado tenta remover os antigos deste workflow e desta branch. Não apaga artefatos de outros workflows/branches. Se faltar permissão, a limpeza avisa no Actions e a retenção continua sendo a proteção dos pacotes novos.
 - A retenção não configura orçamento, não garante uso ilimitado nem limita quantas vezes alguém pode acionar o workflow. Consulte também as configurações de faturamento/limites da conta GitHub.
 - O ZIP antigo foi retirado da árvore atual, mas continua no histórico; não houve reescrita do Git.
 

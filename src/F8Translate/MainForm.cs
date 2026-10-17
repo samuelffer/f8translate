@@ -47,6 +47,7 @@ internal sealed class MainForm : Form
         Font = new Font("Segoe UI", 10);
         BackColor = Color.FromArgb(246, 248, 252);
         ForeColor = Ink;
+        AutoScaleDimensions = new SizeF(96, 96);
         AutoScaleMode = AutoScaleMode.Dpi;
         FormBorderStyle = FormBorderStyle.FixedSingle;
         StartPosition = FormStartPosition.CenterScreen;

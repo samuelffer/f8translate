@@ -117,7 +117,7 @@ O SmartScreen pode alertar porque o aplicativo é novo e não tem assinatura. N�
 
 O workflow publica compacto, portátil e fontes com validade de **7 dias**. Não commite ZIPs nem executáveis. Para uma entrega só de documentação, que não dispara o build, use **Actions → Build Windows → Run workflow** na branch da sessão se precisar de novos pacotes.
 
-Mudanças de código/empacotamento disparam build. Execuções anteriores da mesma branch são canceladas e cada job tem timeout de dez minutos. Não há cache nem agendamento. O arquivo já baixado não expira no PC. Essas medidas reduzem uso, mas limites/cobrança da conta precisam ser conferidos nas configurações do GitHub; não há garantia de uso infinito.
+Mudanças de código/empacotamento disparam build. Execuções anteriores da mesma branch são canceladas e o build tem timeout de dez minutos. Depois dele, um job isolado (até dois minutos) tenta apagar pacotes anteriores da mesma branch e workflow, apenas quando os três atuais existem. Outras branches/workflows são preservados. Se a limpeza falhar por permissão, confira o aviso no Actions; a retenção de sete dias dos pacotes novos continua válida. Não há cache nem agendamento. O arquivo já baixado não expira no PC. Essas medidas reduzem uso, mas limites/cobrança da conta precisam ser conferidos nas configurações do GitHub; não há garantia de uso infinito.
 
 ## Problemas comuns
 
