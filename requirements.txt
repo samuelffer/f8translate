@@ -1,3 +1,0 @@
-keyboard
-pyperclip
-deep-translator

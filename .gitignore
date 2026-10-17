@@ -16,3 +16,14 @@ venv/
 # Windows files
 Thumbs.db
 desktop.ini
+# .NET and local IDE/build output
+**/bin/
+**/obj/
+.vs/
+*.user
+*.suo
+artifacts/
+TestResults/
+
+# Exportações: adicionadas com -f somente na branch da sessão
+zips/

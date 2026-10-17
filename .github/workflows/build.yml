@@ -1,0 +1,20 @@
+name: Build Windows
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build
+        run: dotnet build src/F8Translate/F8Translate.csproj -c Release
+      - name: Publish Windows x64
+        run: dotnet publish src/F8Translate/F8Translate.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o artifacts/win-x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: F8Translate-win-x64
+          path: artifacts/win-x64/
