@@ -143,11 +143,11 @@
        </Grid>
       </Border>
       <StackPanel Grid.Row="4" Orientation="Horizontal">
-       <Button x:Name="TranslateButton" Background="#116CF5" Foreground="White" Padding="22,12" Margin="0,0,12,0" Click="TranslateClick">
-        <StackPanel Orientation="Horizontal"><Image Source="Assets/Icons/zap-white.png" Width="20" Height="20" Margin="0,0,10,0"/><TextBlock Text="Traduzir" VerticalAlignment="Center"/></StackPanel>
+       <Button x:Name="CopyButton" Background="#116CF5" Foreground="White" Padding="22,12" Margin="0,0,12,0" Click="CopyClick">
+        <StackPanel Orientation="Horizontal"><Image Source="Assets/Icons/copy-white.png" Width="20" Height="20" Margin="0,0,9,0"/><TextBlock Text="Copiar tradução" VerticalAlignment="Center"/></StackPanel>
        </Button>
-       <Button x:Name="CopyButton" Background="#EFF5FF" Foreground="#116CF5" Padding="19,12" Margin="0,0,12,0" Click="CopyClick">
-        <StackPanel Orientation="Horizontal"><Image Source="Assets/Icons/copy-blue.png" Width="20" Height="20" Margin="0,0,9,0"/><TextBlock Text="Copiar tradução" VerticalAlignment="Center"/></StackPanel>
+       <Button x:Name="TranslateButton" Background="#EFF5FF" Foreground="#116CF5" Padding="19,12" Margin="0,0,12,0" Click="TranslateClick">
+        <StackPanel Orientation="Horizontal"><Image Source="Assets/Icons/zap-blue.png" Width="20" Height="20" Margin="0,0,10,0"/><TextBlock Text="Traduzir" VerticalAlignment="Center"/></StackPanel>
        </Button>
        <Border Background="#F1F6FF" CornerRadius="23" Padding="15,0" VerticalAlignment="Center" Height="43"><TextBlock x:Name="HotkeyBadge" Text="F8 inativo" Foreground="#116CF5" FontSize="13" VerticalAlignment="Center"/></Border>
       </StackPanel>

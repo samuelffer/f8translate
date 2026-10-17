@@ -212,6 +212,7 @@ internal sealed class MainForm : Form
                 text = Clipboard.GetText();
             }
             if (string.IsNullOrWhiteSpace(text)) throw new InvalidOperationException("Digite ou selecione um trecho de texto primeiro.");
+            view.SetResult(text, string.Empty);
             view.SetStatus("Consultando o MyMemory…");
             var translated = await translator.TranslateAsync(text, from, to, CancellationToken.None);
             view.SetResult(text, translated);
