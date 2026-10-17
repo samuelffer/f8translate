@@ -3,8 +3,14 @@ namespace F8Translate;
 internal static class Program
 {
     [STAThread]
-    private static void Main()
+    private static void Main(string[] args)
     {
+        if (args.Length == 2 && args[0] == "--render-preview")
+        {
+            ApplicationConfiguration.Initialize();
+            InterfacePreview.Render(args[1]);
+            return;
+        }
         using var instance = new Mutex(true, "Local\\F8Translate.Desktop", out var first);
         if (!first)
         {

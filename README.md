@@ -48,7 +48,7 @@ Por padrão, o resultado aparece para leitura/cópia, sem alterar o documento. A
 A tradução usa a API pública do **MyMemory**, sem chave, com limite de **500 bytes UTF-8 por trecho** (não 500 caracteres) e cotas próprias. Não envie senhas, dados pessoais ou confidenciais.
 
 - O texto é enviado como parâmetro de uma requisição HTTPS, após uma ação explícita.
-- O app não grava histórico de texto nem logs de conteúdo. As seleções ficam apenas transitoriamente na memória.
+- O app não grava histórico de texto no disco nem logs de conteúdo. O histórico da sessão fica apenas na memória, limitado a 20 traduções, até limpar ou encerrar.
 - O provedor tem sua própria [política de privacidade](https://mymemory.translated.net/doc/en/privacy.php) e [limites](https://mymemory.translated.net/doc/spec.php).
 - Desmarcar o consentimento impede novas traduções; uma requisição já enviada não pode ser desfeita.
 - Idiomas: português, inglês, espanhol, francês, alemão, italiano e japonês.
@@ -87,3 +87,17 @@ O Actions compila e publica no Windows e verifica a exportação dos fontes. Iss
 ## Licença
 
 [MIT](LICENSE).
+
+## Interface
+
+A janela usa uma interface WPF hospedada pela aplicação Windows Forms existente, sem adicionar outro runtime além do **.NET Desktop Runtime 10 x64** já exigido.
+
+- Menu lateral: **Tradução instantânea**, **Histórico** e **Configurações**.
+- Seletores com bandeiras, botão para inverter idiomas, contagem real de **bytes UTF-8**, texto de entrada e resultado separados.
+- Tradução manual pelo botão **Traduzir** ou **Ctrl+Enter**, além do atalho global e das sugestões existentes. Digitar não envia nada automaticamente.
+- **Histórico somente em memória**, limitado às últimas 20 traduções da sessão. Pode ser limpo no próprio painel e desaparece ao encerrar o aplicativo. Fechar pelo X não encerra e, portanto, não limpa a sessão.
+- A indicação **Rede disponível** informa conectividade detectada pelo Windows, não garante que o serviço de tradução esteja respondendo.
+- Logo, ícones e bandeiras são recursos locais: a interface não baixa imagens durante o uso. Créditos e licenças em [assets/vendor](assets/vendor/README.md).
+- Barra de título própria com minimizar, maximizar/restaurar e fechar para a bandeja; redimensionamento pelas bordas. Cantos arredondados dependem do Windows 11.
+
+O Actions também publica `F8Translate-interface`, com três prévias PNG geradas diretamente pela interface (principal, configurações e janela menor), com a mesma retenção de sete dias. São prévias sem dados pessoais/rede, não substituem testes reais de interação e DPI no Windows.

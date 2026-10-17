@@ -50,7 +50,9 @@ Para testar uma alteração: salve o código, escolha **Sair** na bandeja e exec
 Arquivos principais:
 
 - `Program.cs`: inicialização e instância única.
-- `MainForm.cs`: interface, bandeja, fluxo da tradução e clipboard.
+- `MainForm.cs`: janela nativa, bandeja, fluxo da tradução e clipboard.
+- `MainView.xaml` / `.xaml.cs`: layout WPF, navegação, idiomas e histórico em memória.
+- `InterfacePreview.cs`: renderização local de prévias, sem acesso à rede.
 - `Native.cs`: atalhos e integração com o Windows.
 - `TranslationService.cs`: chamada ao provedor online.
 - `Settings.cs`: configurações locais.
@@ -122,3 +124,22 @@ Mudanças de código/empacotamento disparam build. Execuções anteriores da mes
 - **Clipboard ocupado:** feche ferramentas de clipboard conflitantes e tente novamente.
 - **Tradução recusada:** verifique internet, tamanho do trecho e cotas do MyMemory.
 - **Quero zerar configurações:** saia pela bandeja e exclua `%LOCALAPPDATA%\F8Translate\settings.json`.
+
+## 7. Validar a interface de referência
+
+- [ ] Navegue entre Tradução, Histórico e Configurações com mouse e teclado. Confira foco visível, Tab/Shift+Tab e abertura dos seletores pelas teclas.
+- [ ] Digite/cole uma frase: o contador deve refletir bytes UTF-8 (acentos podem contar mais de um). Apenas digitar não deve gerar requisições.
+- [ ] Traduza pelo botão e por Ctrl+Enter, copie o resultado e inverta idiomas. Origem/destino devem ficar sincronizados com o atalho global.
+- [ ] Traduza por F8 e pela sugestão: original e resultado devem aparecer na tela principal e no histórico.
+- [ ] Histórico: abrir entrada, limpar, limite de 20 registros e ausência de persistência após Sair. Fechar no X mantém a sessão.
+- [ ] Verifique bandeiras e ícones sem internet; só a tradução requer rede. Indicação de rede não deve ser interpretada como garantia de acesso à API.
+- [ ] Teste minimizar, maximizar/restaurar, arrastar a barra, redimensionar e fechar para a bandeja. Teste Windows 10 e 11, DPI 100/150/200% e monitores diferentes.
+- [ ] Teste a janela mínima de 1000×660 pixels lógicos. A tela de configurações tem rolagem se necessário.
+
+O workflow renderiza três prévias locais, que podem ser baixadas em `F8Translate-interface`. Para gerá-las localmente após publicar:
+
+```powershell
+artifacts/compact/F8Translate.exe --render-preview artifacts/previews
+```
+
+As prévias são renders da interface, não capturas de uma sessão interativa. Não testam arraste, foco, clipboard, UI Automation ou serviço externo.

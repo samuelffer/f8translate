@@ -8,6 +8,7 @@ CURRENT_NAMES = {"F8Translate-compact-win-x64", "F8Translate-fontes"}
 
 # Nomes antigos permanecem elegíveis para limpeza, não para publicação.
 NAMES = {
+    "F8Translate-interface",  # prévias visuais opcionais
     "F8Translate-win-x64",  # nome do pacote legado
     "F8Translate-compact-win-x64",
     "F8Translate-portable-win-x64",

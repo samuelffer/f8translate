@@ -32,6 +32,12 @@ jobs:
         run: dotnet build src/F8Translate/F8Translate.csproj -c Release
       - name: Publicar versão compacta (requer Desktop Runtime 10)
         run: dotnet publish src/F8Translate/F8Translate.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o artifacts/compact
+      - name: Renderizar interface sem rede ou dados pessoais
+        shell: pwsh
+        run: |
+          $process = Start-Process -FilePath artifacts/compact/F8Translate.exe -ArgumentList '--render-preview', 'artifacts/previews' -Wait -PassThru
+          if ($process.ExitCode -ne 0) { exit $process.ExitCode }
+          if ((Get-ChildItem artifacts/previews/*.png).Count -ne 3) { throw 'Prévias incompletas' }
       - name: Exportar fontes completos sem colocar ZIP no Git
         shell: pwsh
         run: |
@@ -62,6 +68,12 @@ jobs:
           name: F8Translate-fontes
           path: artifacts/sources/
           include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: F8Translate-interface
+          path: artifacts/previews/
           retention-days: 7
           if-no-files-found: error
 

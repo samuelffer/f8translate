@@ -6,7 +6,7 @@ Leia antes de qualquer alteração. Comunicação e documentação em português
 
 F8 Translate: C# / .NET 10 / Windows Forms, exclusivo para Windows. UI Automation é usada apenas para observar seleções localmente em aplicativos compatíveis; não há OCR nem reconhecimento automático de idioma.
 
-- `src/F8Translate/`: aplicativo.
+- `src/F8Translate/`: aplicativo. `MainForm.cs` gerencia bandeja/atalhos; `MainView.xaml` e `.xaml.cs` desenham a interface WPF; `InterfacePreview.cs` gera prévias sem dados reais.
 - `docs/DESENVOLVIMENTO.md`: preparar Windows, executar, testar e publicar.
 - `scripts/build_zip.py`: exportar fontes completos (Python padrão, apenas para o mantenedor/CI).
 - `.github/workflows/build.yml`: publicar apenas aplicativo compacto e fontes, com retenção de 7 dias e limpeza de pacotes anteriores da mesma branch/workflow.
@@ -27,7 +27,7 @@ F8 Translate: C# / .NET 10 / Windows Forms, exclusivo para Windows. UI Automatio
    git commit -m "Descrição da entrega"
    git push origin arena/91c71699-f8translate
    ```
-6. Confira o workflow e entregue os links dos artefatos. O Actions gera dois downloads com validade de **7 dias**: fontes completos e aplicativo compacto. Não faça promessas de download antes da conclusão bem-sucedida.
+6. Confira o workflow e entregue os links dos artefatos. O Actions gera dois pacotes principais e prévias visuais com validade de **7 dias**: fontes completos e aplicativo compacto. Não faça promessas de download antes da conclusão bem-sucedida.
 7. Mudanças só em documentação não disparam compilação: se precisar de um novo pacote para uma entrega, execute manualmente `gh workflow run build.yml --ref arena/91c71699-f8translate` e acompanhe o resultado. Não dispare builds duplicados.
 8. Se o GitHub falhar, informe e ofereça o ZIP local. Nunca diga que publicou sem confirmar.
 
@@ -54,3 +54,10 @@ Retenção reduz acúmulo, mas não garante uso ilimitado nem controla a cobran�
 - Substituição é opcional e desativada ao abrir. Sugestões nunca substituem documentos.
 - Fechar no X mantém o app na bandeja; Sair encerra explicitamente. Não impedir encerramento do Windows.
 - Não edite o mesmo arquivo em chamadas paralelas.
+
+## Interface e recursos visuais
+
+- Use a referência minimalista: barra lateral, fundo claro, cantos arredondados, azul nos destaques. Preserve navegação de teclado, foco visível, redimensionamento e fechamento para a bandeja.
+- Ícones Lucide e bandeiras Circle Flags são imagens locais compiladas. Preserve licenças em `assets/vendor/` e os avisos no pacote. Não acrescente downloads de imagem em tempo de execução.
+- Histórico é somente em memória, no máximo 20 entradas, com ação de limpar; nunca persista textos. Tradução manual é sempre uma ação explícita, jamais por digitação.
+- `F8Translate-interface` é um artefato auxiliar de prévias PNG com retenção de sete dias; a limpeza também o remove. Não commite prévias geradas.

@@ -1,97 +1,61 @@
+using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
+using System.Windows.Forms.Integration;
 
 namespace F8Translate;
 
+/// <summary>A janela nativa cuida dos atalhos e da bandeja; MainView cuida da apresentação.</summary>
 internal sealed class MainForm : Form
 {
-    private static readonly Color Ink = Color.FromArgb(30, 41, 59);
-    private static readonly Color Muted = Color.FromArgb(100, 116, 139);
-    private static readonly Color Accent = Color.FromArgb(49, 92, 222);
     private readonly Settings settings = Settings.Load();
     private readonly TranslationService translator = new();
-    private readonly ComboBox source = Picker(), target = Picker(), hotkey = Picker();
-    private readonly CheckBox consent = Toggle("Permitir tradução online pelo MyMemory");
-    private readonly CheckBox suggestions = Toggle("Sugerir tradução ao selecionar texto");
-    private readonly CheckBox replace = Toggle("No atalho, substituir o texto em vez de pré-visualizar");
-    private readonly TextBox result = new()
-    {
-        Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical,
-        BorderStyle = BorderStyle.None, BackColor = Color.White, ForeColor = Ink, Dock = DockStyle.Fill,
-        Font = new Font("Segoe UI", 12), PlaceholderText = "Sua tradução aparece aqui."
-    };
-    private readonly Label status = new() { AutoSize = true, ForeColor = Muted, MaximumSize = new Size(530, 0) };
-    private readonly Label badge = new() { AutoSize = true, ForeColor = Accent, Padding = new Padding(0, 6, 0, 0) };
+    private readonly MainView view = new();
     private readonly NotifyIcon tray;
     private readonly SuggestionPopup popup = new();
     private SelectionWatcher? watcher;
     private bool busy, exiting, paused, registered;
-    private static readonly Language[] Languages = [new("pt", "Português"), new("en", "Inglês"), new("es", "Espanhol"), new("fr", "Francês"), new("de", "Alemão"), new("it", "Italiano"), new("ja", "Japonês")];
-    private sealed record Language(string Code, string Name) { public override string ToString() => Name; }
-    private static ComboBox Picker() => new() { DropDownStyle = ComboBoxStyle.DropDownList, FlatStyle = FlatStyle.Flat, Width = 155 };
-    private static CheckBox Toggle(string text) => new() { Text = text, AutoSize = true, ForeColor = Ink, Margin = new Padding(0, 5, 0, 5) };
-    private static Label Caption(string text) => new() { Text = text, AutoSize = true, ForeColor = Muted, Margin = new Padding(0, 0, 0, 7) };
-    private static Button Button(string text, bool primary = false)
-    {
-        var button = new Button { Text = text, AutoSize = true, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand,
-            BackColor = primary ? Accent : Color.White, ForeColor = primary ? Color.White : Ink,
-            Padding = new Padding(14, 7, 14, 7), Margin = new Padding(0, 0, 10, 0) };
-        button.FlatAppearance.BorderColor = Color.FromArgb(222, 228, 237);
-        button.FlatAppearance.BorderSize = primary ? 0 : 1;
-        return button;
-    }
 
     public MainForm()
     {
+        SuspendLayout();
         Text = "F8 Translate";
-        ClientSize = new Size(600, 730);
-        Font = new Font("Segoe UI", 10);
-        BackColor = Color.FromArgb(246, 248, 252);
-        ForeColor = Ink;
         AutoScaleDimensions = new SizeF(96, 96);
         AutoScaleMode = AutoScaleMode.Dpi;
-        FormBorderStyle = FormBorderStyle.FixedSingle;
+        ClientSize = new Size(1120, 750);
+        MinimumSize = new Size(1000, 660);
+        FormBorderStyle = FormBorderStyle.None;
         StartPosition = FormStartPosition.CenterScreen;
-        MaximizeBox = false;
-        var layout = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, Padding = new Padding(30, 24, 22, 20), AutoScroll = true };
-        Controls.Add(layout);
-        void Add(Control control, int bottom = 12) { control.Margin = new Padding(0, 0, 0, bottom); layout.Controls.Add(control); }
-        Add(new Label { Text = "F8 Translate", Font = new Font("Segoe UI", 23, FontStyle.Bold), AutoSize = true }, 2);
-        Add(Caption("Menos interrupções. Mais entendimento."), 18);
-        source.Items.AddRange(Languages); target.Items.AddRange(Languages);
-        hotkey.Items.AddRange(["F6", "F7", "F8", "F9", "F10", "F11", "F12"]);
-        source.SelectedItem = Languages.FirstOrDefault(x => x.Code == settings.Source) ?? Languages[1];
-        target.SelectedItem = Languages.FirstOrDefault(x => x.Code == settings.Target) ?? Languages[0];
-        hotkey.SelectedItem = hotkey.Items.Contains(settings.Hotkey) ? settings.Hotkey : "F8";
-        settings.Source = ((Language)source.SelectedItem!).Code;
-        settings.Target = ((Language)target.SelectedItem!).Code;
-        settings.Hotkey = (string)hotkey.SelectedItem!;
-        consent.Checked = settings.Consent;
-        suggestions.Checked = settings.Suggestions;
-        var languages = new FlowLayoutPanel { AutoSize = true, WrapContents = false, Margin = Padding.Empty };
-        foreach (var item in new[] { ("DE", source), ("PARA", target), ("ATALHO", hotkey) })
+        BackColor = Color.FromArgb(245, 248, 252);
+        using (var stream = typeof(MainForm).Assembly.GetManifestResourceStream("F8Translate.Assets.app.ico"))
+            if (stream != null) Icon = new Icon(stream);
+        Controls.Add(new ElementHost { Dock = DockStyle.Fill, Child = view });
+        // ElementHost encaminha entrada de teclado e acessibilidade para a interface WPF.
+        view.Initialize(settings);
+        settings.Source = view.SourceCode;
+        settings.Target = view.TargetCode;
+        settings.Hotkey = view.Hotkey;
+        view.MinimizeRequested += () => WindowState = FormWindowState.Minimized;
+        view.MaximizeRequested += ToggleMaximize;
+        view.CloseRequested += Close;
+        view.DragRequested += () =>
         {
-            var column = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, AutoSize = true, WrapContents = false, Margin = new Padding(0, 0, 20, 0) };
-            column.Controls.Add(Caption(item.Item1)); column.Controls.Add(item.Item2); languages.Controls.Add(column);
-        }
-        Add(languages, 18);
-        var output = new Panel { Width = 530, Height = 175, BackColor = Color.White, Padding = new Padding(16) };
-        output.Controls.Add(result); Add(output);
-        var actions = new FlowLayoutPanel { AutoSize = true, WrapContents = false };
-        var copy = Button("Copiar tradução");
-        copy.Click += (_, _) =>
-        {
-            if (busy || result.TextLength == 0) return;
-            try { Clipboard.SetText(result.Text); status.Text = "Tradução copiada."; }
-            catch (ExternalException) { status.Text = "Clipboard ocupado. Tente novamente."; }
+            if (WindowState == FormWindowState.Maximized) return;
+            Native.ReleaseCapture();
+            Native.SendMessage(Handle, 0xA1, 2, 0);
         };
-        actions.Controls.Add(copy); actions.Controls.Add(badge); Add(actions, 18);
-        Add(consent, 3); Add(suggestions, 3); Add(replace, 12);
-        Add(new Label { Text = "A sugestão é local: só enviamos o trecho quando você clica ou usa o atalho. Até 500 bytes por tradução. Não envie dados sensíveis.", ForeColor = Muted, AutoSize = true, MaximumSize = new Size(530, 0) }, 5);
-        var privacy = new LinkLabel { Text = "Privacidade do MyMemory ↗", AutoSize = true, LinkColor = Accent };
-        privacy.LinkClicked += (_, _) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://mymemory.translated.net/doc/en/privacy.php") { UseShellExecute = true });
-        Add(privacy, 16);
-        var apply = Button("Salvar e ativar", true);
-        apply.Click += (_, _) => Apply(); Add(apply, 12); Add(status);
+        view.TranslateRequested += () => { if (!busy) _ = TranslateSelectionAsync(manual: true); };
+        view.CopyRequested += CopyResult;
+        view.SaveRequested += Apply;
+        view.RouteChanged += () =>
+        {
+            if (busy) return;
+            settings.Source = view.SourceCode;
+            settings.Target = view.TargetCode;
+            UpdateObserver();
+            SaveSettings();
+        };
+        view.ConsentWithdrawn += () => { settings.Consent = false; Register(); SaveSettings(); };
+        view.SuggestionsWithdrawn += () => { settings.Suggestions = false; UpdateObserver(); SaveSettings(); };
         var menu = new ContextMenuStrip();
         menu.Items.Add("Abrir F8 Translate", null, (_, _) => Open());
         var pause = new ToolStripMenuItem("Pausar") { CheckOnClick = true };
@@ -99,10 +63,10 @@ internal sealed class MainForm : Form
         menu.Items.Add(pause);
         menu.Items.Add("Sair", null, (_, _) =>
         {
-            if (busy) { status.Text = "Aguarde a tradução terminar antes de sair."; Open(); return; }
+            if (busy) { view.SetStatus("Aguarde a tradução terminar antes de sair."); Open(); return; }
             exiting = true; Close();
         });
-        tray = new NotifyIcon { Text = "F8 Translate", Icon = SystemIcons.Application, ContextMenuStrip = menu, Visible = true };
+        tray = new NotifyIcon { Text = "F8 Translate", Icon = Icon, ContextMenuStrip = menu, Visible = true };
         tray.DoubleClick += (_, _) => Open();
         popup.TranslateRequested += selected =>
         {
@@ -110,12 +74,10 @@ internal sealed class MainForm : Form
         };
         Shown += (_, _) =>
         {
-            watcher = new SelectionWatcher(selected =>
-            {
-                if (IsDisposed || Disposing) return;
-                try { BeginInvoke((Action)(() => OnSelection(selected))); }
-                catch (InvalidOperationException) { }
-            });
+            watcher = new SelectionWatcher(selected => PostUi(() => OnSelection(selected)));
+            Native.RoundWindow(Handle);
+            UpdateNetwork();
+            NetworkChange.NetworkAvailabilityChanged += NetworkChanged;
             Register();
         };
         FormClosing += (_, e) =>
@@ -126,76 +88,108 @@ internal sealed class MainForm : Form
                 tray.ShowBalloonTip(2500, "F8 Translate continua ativo", "Use o atalho ou selecione texto. Para encerrar, escolha Sair na bandeja.", ToolTipIcon.Info);
             }
         };
-        // Revogar uma permissão tem efeito imediato, mesmo antes de salvar.
-        consent.CheckedChanged += (_, _) => { if (!consent.Checked) { settings.Consent = false; Register(); } };
-        suggestions.CheckedChanged += (_, _) => { if (!suggestions.Checked) { settings.Suggestions = false; UpdateObserver(); } };
+        ResumeLayout();
     }
 
-    private void Open() { Show(); WindowState = FormWindowState.Normal; Activate(); }
-
+    private void PostUi(Action action)
+    {
+        if (IsDisposed || Disposing || !IsHandleCreated) return;
+        try { BeginInvoke(action); } catch (InvalidOperationException) { }
+    }
+    private void NetworkChanged(object? sender, NetworkAvailabilityEventArgs e) => PostUi(UpdateNetwork);
+    private void UpdateNetwork() => view.SetNetwork(NetworkInterface.GetIsNetworkAvailable());
+    private void Open() { Show(); if (WindowState == FormWindowState.Minimized) WindowState = FormWindowState.Normal; Activate(); }
+    private void ToggleMaximize()
+    {
+        MaximizedBounds = Screen.FromHandle(Handle).WorkingArea;
+        WindowState = WindowState == FormWindowState.Maximized ? FormWindowState.Normal : FormWindowState.Maximized;
+    }
+    private void CopyResult()
+    {
+        if (busy || view.ResultText.Length == 0) { view.SetStatus("Traduza um trecho antes de copiar o resultado."); return; }
+        try { Clipboard.SetText(view.ResultText); view.SetStatus("Tradução copiada."); }
+        catch (ExternalException) { view.SetStatus("Clipboard ocupado. Tente novamente."); }
+    }
+    private bool SaveSettings()
+    {
+        try { settings.Save(); return true; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        { view.SetStatus("Não foi possível salvar as configurações."); return false; }
+    }
     private void Apply()
     {
-        if (busy) { status.Text = "Aguarde a tradução terminar."; return; }
-        settings.Source = ((Language)source.SelectedItem!).Code;
-        settings.Target = ((Language)target.SelectedItem!).Code;
-        settings.Hotkey = (string)hotkey.SelectedItem!;
-        settings.Consent = consent.Checked;
-        settings.Suggestions = suggestions.Checked;
-        try { settings.Save(); Register(); }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { status.Text = "Não foi possível salvar as configurações."; }
+        if (busy) { view.SetStatus("Aguarde a tradução terminar."); return; }
+        settings.Source = view.SourceCode;
+        settings.Target = view.TargetCode;
+        settings.Hotkey = view.Hotkey;
+        settings.Consent = view.Consent;
+        settings.Suggestions = view.Suggestions;
+        if (!SaveSettings()) return;
+        Register();
+        if (settings.Consent) view.ShowTranslation();
     }
-
     private void UpdateObserver()
     {
         if (watcher != null) watcher.Enabled = settings.Suggestions && settings.Consent && !paused && !busy;
         popup.Hide();
     }
-
+    private string Badge => busy ? "Traduzindo…" : paused ? "Pausado" : !settings.Consent ? "Inativo" : registered ? $"● {settings.Hotkey} ativo" : "Atalho ocupado";
     private void Register()
     {
         Native.UnregisterHotKey(Handle, Native.HotkeyId);
         registered = false;
         UpdateObserver();
-        if (paused) { badge.Text = "Pausado"; status.Text = "Retome pelo ícone na bandeja."; return; }
-        if (!settings.Consent) { badge.Text = "Inativo"; status.Text = "Leia o aviso, permita a tradução online e salve para começar."; return; }
+        if (paused) { view.SetBadge(Badge); view.SetStatus("Retome pelo ícone na bandeja."); return; }
+        if (!settings.Consent) { view.SetBadge(Badge); view.SetStatus("Em Configurações, leia o aviso e permita a tradução online."); return; }
         registered = Native.RegisterHotKey(Handle, Native.HotkeyId, 0x4000, (uint)Enum.Parse<Keys>(settings.Hotkey));
-        badge.Text = registered ? $"●  {settings.Hotkey} ativo" : "Atalho ocupado";
-        status.Text = registered ? "Fechar no X mantém o app ativo na bandeja." : "Escolha outro atalho e salve. As sugestões continuam disponíveis se ativadas.";
+        view.SetBadge(Badge);
+        view.SetStatus(registered ? "Selecione texto e use o atalho, ou digite aqui e clique em Traduzir. Ctrl+Enter também traduz." : "Atalho ocupado. Escolha outro em Configurações. A tradução manual continua disponível.");
     }
-
     private void OnSelection(SelectedText? selected)
     {
         if (selected == null || busy || paused || !settings.Consent || !settings.Suggestions
             || Native.GetForegroundWindow() != selected.Window) { popup.Hide(); return; }
         popup.Offer(selected, $"{settings.Source.ToUpperInvariant()} → {settings.Target.ToUpperInvariant()}");
     }
-
     protected override void WndProc(ref Message m)
     {
         base.WndProc(ref m);
         if (m.Msg == Native.HotkeyMessage && m.WParam == Native.HotkeyId && registered && !busy)
             _ = TranslateSelectionAsync();
+        // Bordas nativas para redimensionar, mesmo com a barra de título personalizada.
+        if (m.Msg == 0x84 && m.Result == 1 && WindowState == FormWindowState.Normal)
+        {
+            long packed = m.LParam.ToInt64();
+            var point = PointToClient(new Point((short)(packed & 0xffff), (short)((packed >> 16) & 0xffff)));
+            int edge = Math.Max(5, DeviceDpi * 6 / 96);
+            bool left = point.X < edge, right = point.X >= ClientSize.Width - edge;
+            bool top = point.Y < edge, bottom = point.Y >= ClientSize.Height - edge;
+            m.Result = (IntPtr)(top ? (left ? 13 : right ? 14 : 12) : bottom ? (left ? 16 : right ? 17 : 15) : left ? 10 : right ? 11 : 1);
+        }
     }
-
-    private async Task TranslateSelectionAsync(SelectedText? selected = null)
+    private async Task TranslateSelectionAsync(SelectedText? selected = null, bool manual = false)
     {
-        if (selected == null && Native.GetForegroundWindow() == Handle) { status.Text = "Selecione texto em outro aplicativo primeiro."; return; }
+        if (busy) return;
+        if (!settings.Consent) { view.ShowSettings(); view.SetStatus("Permita a tradução online e salve antes de enviar texto."); Open(); return; }
+        if (paused) { view.SetStatus("O aplicativo está pausado. Retome pelo ícone na bandeja."); return; }
+        if (!manual && selected == null && Native.GetForegroundWindow() == Handle)
+        { view.SetStatus("Aqui, use o botão Traduzir ou Ctrl+Enter. O atalho global captura texto de outro aplicativo."); return; }
         busy = true;
         UpdateObserver();
+        view.SetBusy(true);
+        view.SetBadge(Badge);
         var window = selected?.Window ?? Native.GetForegroundWindow();
-        // Uma sugestão nunca substitui o documento: a seleção pode já ter mudado.
-        var shouldReplace = selected == null && replace.Checked;
+        var shouldReplace = !manual && selected == null && view.Replace;
         var from = settings.Source;
         var to = settings.Target;
         IDataObject? backup = null;
         uint ownedSequence = 0;
         bool ownsClipboard = false;
-        result.Clear();
-        badge.Text = "Traduzindo…";
         try
         {
             string text;
-            if (selected != null) text = selected.Text;
+            if (manual) text = view.InputText;
+            else if (selected != null) text = selected.Text;
             else
             {
                 var original = Clipboard.GetDataObject();
@@ -217,10 +211,12 @@ internal sealed class MainForm : Form
                 ownsClipboard = true;
                 text = Clipboard.GetText();
             }
-            if (string.IsNullOrWhiteSpace(text)) throw new InvalidOperationException("Selecione um trecho de texto primeiro.");
-            status.Text = "Consultando o MyMemory…";
+            if (string.IsNullOrWhiteSpace(text)) throw new InvalidOperationException("Digite ou selecione um trecho de texto primeiro.");
+            view.SetStatus("Consultando o MyMemory…");
             var translated = await translator.TranslateAsync(text, from, to, CancellationToken.None);
-            result.Text = translated;
+            view.SetResult(text, translated);
+            view.AddHistory(text, translated, from, to);
+            view.ShowTranslation();
             if (shouldReplace)
             {
                 if (!settings.Consent || Native.GetForegroundWindow() != window || Native.GetClipboardSequenceNumber() != ownedSequence)
@@ -229,15 +225,15 @@ internal sealed class MainForm : Form
                 ownedSequence = Native.GetClipboardSequenceNumber();
                 Native.Ctrl(0x56);
                 await Task.Delay(300);
-                status.Text = "Tradução enviada com Ctrl+V. Ctrl+Z depende do aplicativo de destino.";
+                view.SetStatus("Tradução enviada com Ctrl+V. Ctrl+Z depende do aplicativo de destino.");
             }
-            else { status.Text = "Pronto. Copie a tradução ou continue selecionando textos."; Open(); }
+            else { view.SetStatus("Pronto. Copie a tradução ou continue selecionando textos."); Open(); }
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException or ExternalException or InvalidOperationException or System.ComponentModel.Win32Exception)
         {
-            status.Text = ex is TaskCanceledException ? "O serviço demorou demais. Tente novamente." :
+            view.SetStatus(ex is TaskCanceledException ? "O serviço demorou demais. Tente novamente." :
                 ex is HttpRequestException ? "Não foi possível conectar ao serviço. Verifique a internet." :
-                ex is System.Text.Json.JsonException ? "Resposta inválida do provedor." : ex.Message;
+                ex is System.Text.Json.JsonException ? "Resposta inválida do provedor." : ex.Message);
             Open();
         }
         finally
@@ -250,18 +246,18 @@ internal sealed class MainForm : Form
                     else Clipboard.SetDataObject(backup, true);
                 }
             }
-            catch (ExternalException) { status.Text += " Não foi possível restaurar o clipboard."; }
+            catch (ExternalException) { view.SetStatus("A tradução terminou, mas não foi possível restaurar o clipboard."); }
             busy = false;
-            badge.Text = paused ? "Pausado" : !settings.Consent ? "Inativo" : registered ? $"●  {settings.Hotkey} ativo" : "Atalho ocupado";
+            view.SetBusy(false); view.SetBadge(Badge);
             UpdateObserver();
         }
     }
-
     protected override void Dispose(bool disposing)
     {
         if (disposing)
         {
-            watcher?.Dispose(); popup.Dispose();
+            NetworkChange.NetworkAvailabilityChanged -= NetworkChanged;
+            watcher?.Dispose(); popup.Dispose(); view.ClearSensitiveContent();
             Native.UnregisterHotKey(Handle, Native.HotkeyId);
             tray.Dispose(); translator.Dispose();
         }

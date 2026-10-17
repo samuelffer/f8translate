@@ -3,7 +3,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
-    <!-- UI Automation permite ler seleções sem simular Ctrl+C. -->
+    <!-- WPF desenha a interface e fornece UI Automation; ambos usam Desktop Runtime. -->
     <UseWPF>true</UseWPF>
     <!-- Distribuição leve: o usuário instala Desktop Runtime 10 separadamente. -->
     <SelfContained>false</SelfContained>
@@ -12,5 +12,11 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets/app.ico</ApplicationIcon>
   </PropertyGroup>
+  <ItemGroup>
+    <Resource Include="Assets/**/*.png" />
+    <EmbeddedResource Include="Assets/app.ico" />
+    <Content Include="../../assets/vendor/**/LICENSE*" Link="Licenses/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

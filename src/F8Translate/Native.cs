@@ -20,6 +20,23 @@ internal static class Native
     [DllImport("user32.dll", SetLastError = true)]
     private static extern uint SendInput(uint count, INPUT[] inputs, int size);
 
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static extern bool ReleaseCapture();
+    [DllImport("user32.dll")]
+    internal static extern IntPtr SendMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr window, int attribute, ref int value, int size);
+    internal static void RoundWindow(IntPtr window)
+    {
+        // A preferência só é suportada no Windows 11; no 10 a janela continua normal.
+        if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000))
+        {
+            int round = 2;
+            _ = DwmSetWindowAttribute(window, 33, ref round, sizeof(int));
+        }
+    }
+
     // INPUT's union must include MOUSEINPUT, including its native alignment on x64.
     [StructLayout(LayoutKind.Sequential)]
     private struct INPUT { public uint Type; public InputUnion Data; }
