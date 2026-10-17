@@ -4,6 +4,12 @@
 
 Traduza texto sem sair do seu fluxo. Aplicativo Windows em **C# / .NET 10**, com atalho global, sugestões discretas e ícone na bandeja.
 
+## Requisito obrigatório
+
+Instale **[.NET Desktop Runtime 10 para Windows x64](https://dotnet.microsoft.com/download/dotnet/10.0)** uma única vez antes de abrir o aplicativo. Escolha **Desktop Runtime**, não apenas o runtime básico. Não precisa de SDK, Python ou Visual Studio para usar.
+
+**O runtime e seu instalador não estão incluídos no programa nem no ZIP.** Publicamos somente a versão compacta para reduzir o tamanho dos downloads e o custo da compilação.
+
 ## Baixar e usar — sem ambiente de desenvolvimento
 
 Na aba **Actions → Build Windows**, abra a execução concluída com sucesso da branch `arena/91c71699-f8translate`. Em **Artifacts**, escolha:
@@ -11,7 +17,6 @@ Na aba **Actions → Build Windows**, abra a execução concluída com sucesso d
 | Download | Para quem é |
 | --- | --- |
 | **F8Translate-compact-win-x64** | Menor executável. Requer instalar **.NET Desktop Runtime 10 x64** uma única vez. Não precisa de SDK. |
-| **F8Translate-portable-win-x64** | Runtime incluído e comprimido. Maior, mas não precisa instalar .NET. |
 | **F8Translate-fontes** | Todos os fontes, documentação e configurações para editar/copiar manualmente à `main`. Não é o aplicativo pronto. |
 
 Extraia o ZIP e abra `F8Translate.exe`. Feche a versão antiga pelo menu **Sair** na bandeja antes de abrir outra. Os tamanhos reais dos executáveis aparecem no resumo da execução do Actions.
@@ -57,7 +62,7 @@ A tradução usa a API pública do **MyMemory**, sem chave, com limite de **500 
 - O fallback por atalho depende de Ctrl+C; a substituição depende de Ctrl+V. Evite executar como administrador.
 - Na substituição, não edite nem mude a seleção enquanto aguarda: a janela ativa é verificada, mas o app não consegue garantir que o cursor dentro dela continue no mesmo local.
 - No fluxo por atalho, o clipboard é restaurado se não tiver sido modificado durante a requisição. Formatos especiais podem não ser preservados perfeitamente. Ctrl+Z depende do aplicativo de destino.
-- O executável não é assinado digitalmente. Não é um instalador. A versão portátil comprimida extrai componentes temporários: baixar menos não significa usar o mesmo espaço reduzido no disco.
+- O executável não é assinado digitalmente. Não é um instalador e exige o Desktop Runtime indicado acima.
 
 ## Desenvolvimento e compilação
 
@@ -69,7 +74,7 @@ Veja o [guia para Windows](docs/DESENVOLVIMENTO.md), com instalação do SDK, co
 - Uma execução nova cancela a anterior da mesma branch; o build tem limite de dez minutos e a limpeza de dois minutos.
 - Sem cache de dependências, sem tarefas periódicas e sem builds duplicados em PR.
 - Pacotes de fontes e executáveis são artefatos com retenção de sete dias; não entram no histórico Git.
-- Após publicar os três pacotes novos, um job isolado tenta remover os antigos deste workflow e desta branch. Não apaga artefatos de outros workflows/branches. Se faltar permissão, a limpeza avisa no Actions e a retenção continua sendo a proteção dos pacotes novos.
+- Após publicar os dois pacotes novos, um job isolado tenta remover os antigos deste workflow e desta branch. Não apaga artefatos de outros workflows/branches. Se faltar permissão, a limpeza avisa no Actions e a retenção continua sendo a proteção dos pacotes novos.
 - A retenção não configura orçamento, não garante uso ilimitado nem limita quantas vezes alguém pode acionar o workflow. Consulte também as configurações de faturamento/limites da conta GitHub.
 - O ZIP antigo foi retirado da árvore atual, mas continua no histórico; não houve reescrita do Git.
 

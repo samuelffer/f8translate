@@ -5,6 +5,8 @@
     <UseWindowsForms>true</UseWindowsForms>
     <!-- UI Automation permite ler seleções sem simular Ctrl+C. -->
     <UseWPF>true</UseWPF>
+    <!-- Distribuição leve: o usuário instala Desktop Runtime 10 separadamente. -->
+    <SelfContained>false</SelfContained>
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
     <Nullable>enable</Nullable>

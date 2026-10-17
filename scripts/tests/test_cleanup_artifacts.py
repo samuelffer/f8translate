@@ -13,6 +13,14 @@ class CleanupTests(unittest.TestCase):
         self.previous = {**self.current, "id": 9, "event": "push"}
         self.artifact = {"name": "F8Translate-win-x64", "workflow_run": {"id": 9}}
 
+    def test_current_delivery_requires_app_and_sources_but_not_legacy_portable(self):
+        artifacts = [{"name": name, "workflow_run": {"id": 10}} for name in cleanup.CURRENT_NAMES]
+        self.assertTrue(cleanup.has_current_delivery(artifacts, 10))
+        self.assertFalse(cleanup.has_current_delivery(artifacts[:1], 10))
+        self.assertFalse(cleanup.has_current_delivery(artifacts, 9))
+        legacy = {"name": "F8Translate-portable-win-x64", "workflow_run": {"id": 9}}
+        self.assertTrue(cleanup.belongs_to_previous_delivery(legacy, self.current, self.previous))
+
     def test_removes_only_previous_matching_deliveries(self):
         self.assertTrue(cleanup.belongs_to_previous_delivery(self.artifact, self.current, self.previous))
 

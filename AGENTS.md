@@ -9,7 +9,7 @@ F8 Translate: C# / .NET 10 / Windows Forms, exclusivo para Windows. UI Automatio
 - `src/F8Translate/`: aplicativo.
 - `docs/DESENVOLVIMENTO.md`: preparar Windows, executar, testar e publicar.
 - `scripts/build_zip.py`: exportar fontes completos (Python padrão, apenas para o mantenedor/CI).
-- `.github/workflows/build.yml`: publicar compacto, portátil e fontes, com retenção de 7 dias e limpeza de pacotes anteriores da mesma branch/workflow.
+- `.github/workflows/build.yml`: publicar apenas aplicativo compacto e fontes, com retenção de 7 dias e limpeza de pacotes anteriores da mesma branch/workflow.
 
 ## Fluxo obrigatório de entrega
 
@@ -27,7 +27,7 @@ F8 Translate: C# / .NET 10 / Windows Forms, exclusivo para Windows. UI Automatio
    git commit -m "Descrição da entrega"
    git push origin arena/91c71699-f8translate
    ```
-6. Confira o workflow e entregue os links dos artefatos. O Actions gera três downloads com validade de **7 dias**: fontes completos, aplicativo compacto e portátil. Não faça promessas de download antes da conclusão bem-sucedida.
+6. Confira o workflow e entregue os links dos artefatos. O Actions gera dois downloads com validade de **7 dias**: fontes completos e aplicativo compacto. Não faça promessas de download antes da conclusão bem-sucedida.
 7. Mudanças só em documentação não disparam compilação: se precisar de um novo pacote para uma entrega, execute manualmente `gh workflow run build.yml --ref arena/91c71699-f8translate` e acompanhe o resultado. Não dispare builds duplicados.
 8. Se o GitHub falhar, informe e ofereça o ZIP local. Nunca diga que publicou sem confirmar.
 
@@ -37,12 +37,12 @@ Este fluxo substitui o combinado antigo de commitar ZIPs: agora todos os pacotes
 
 Use `retention-days: 7`, limite de tempo, cancelamento de execuções antigas e apenas runners hospedados padrão. Não adicione caches grandes, tarefas agendadas ou pipelines desnecessários. Não abra PR, faça merge, crie release ou envie para `main` sem pedido explícito. O usuário copia manualmente os fontes para a main, sem a pasta `zips/`.
 
-Retenção reduz acúmulo, mas não garante uso ilimitado nem controla a cobrança da conta. Não altere permissões ou orçamento da conta sem autorização. O job isolado de limpeza tem apenas contents:read e actions:write, valida os três pacotes atuais antes de apagar os antigos e não pode apagar outros workflows/branches. Falhas de permissão devem ser informadas; nunca apague releases ou arquivos do usuário por engano.
+Retenção reduz acúmulo, mas não garante uso ilimitado nem controla a cobrança da conta. Não altere permissões ou orçamento da conta sem autorização. O job isolado de limpeza tem apenas contents:read e actions:write, valida os dois pacotes atuais antes de apagar os antigos e não pode apagar outros workflows/branches. Falhas de permissão devem ser informadas; nunca apague releases ou arquivos do usuário por engano.
 
 ## Distribuição
 
 - Compacto: framework-dependent; requer .NET Desktop Runtime 10 x64 instalado uma vez.
-- Portátil: self-contained, single-file comprimido; inclui runtime, é maior e extrai componentes temporários. Não prometa reduzir o espaço extraído ao tamanho comprimido.
+- Não gerar variante portátil/self-contained nem incluir runtime ou seu instalador no pacote. Manter o requisito .NET Desktop Runtime 10 x64 explícito no README e no LEIA-ME. A limpeza pode remover artefatos portáteis legados.
 - Não use trimming/NativeAOT com Windows Forms/UI Automation sem suporte e validação apropriados.
 - Fontes: não são instalador. Extrair em pasta limpa; ZIP não apaga arquivos obsoletos.
 

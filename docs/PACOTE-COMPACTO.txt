@@ -7,7 +7,7 @@ F8 Translate — compacto — Windows x64
 3. Escolha os idiomas, permita a tradução online e clique em Salvar e ativar.
 
 O executável pequeno reutiliza o runtime instalado no computador.
-Se quiser usar sem instalar o runtime, baixe o pacote portable (maior).
+O runtime NÃO está incluído neste pacote; sua instalação é obrigatória.
 
 Fechar no X mantém o app ativo na bandeja. Para encerrar, clique no ícone
 com o botão direito e escolha Sair. O Windows pode esconder o ícone em ^.

@@ -4,6 +4,9 @@ import json
 import os
 import urllib.request
 
+CURRENT_NAMES = {"F8Translate-compact-win-x64", "F8Translate-fontes"}
+
+# Nomes antigos permanecem elegíveis para limpeza, não para publicação.
 NAMES = {
     "F8Translate-win-x64",  # nome do pacote legado
     "F8Translate-compact-win-x64",
@@ -21,6 +24,11 @@ def belongs_to_previous_delivery(artifact, current, candidate):
         and candidate.get("repository", {}).get("id") == current.get("repository", {}).get("id")
         and candidate.get("event") in {"push", "workflow_dispatch"}
     )
+
+
+def has_current_delivery(artifacts, run_id):
+    published = {a["name"] for a in artifacts if a.get("workflow_run", {}).get("id") == run_id}
+    return CURRENT_NAMES <= published
 
 
 def main():
@@ -50,9 +58,8 @@ def main():
             break
         page += 1
 
-    # Não apagar enquanto faltar qualquer um dos três pacotes atuais.
-    published = {a["name"] for a in artifacts if a.get("workflow_run", {}).get("id") == run_id}
-    if not (NAMES - {"F8Translate-win-x64"}) <= published:
+    # Não apagar enquanto faltar qualquer um dos dois pacotes atuais.
+    if not has_current_delivery(artifacts, run_id):
         raise RuntimeError("Pacotes atuais incompletos; limpeza cancelada por segurança.")
 
     runs = {}

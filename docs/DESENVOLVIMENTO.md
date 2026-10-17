@@ -1,6 +1,6 @@
 # Preparar seu PC Windows
 
-**Quer apenas usar/testar?** Não precisa instalar ferramentas de desenvolvimento. Baixe um artefato do Actions: `portable` funciona sem instalar .NET; `compact` exige apenas **Desktop Runtime 10 x64** uma vez. O SDK abaixo só é necessário para editar/compilar localmente.
+**Quer apenas usar/testar?** Não precisa instalar ferramentas de desenvolvimento. Baixe o artefato compacto do Actions e instale **.NET Desktop Runtime 10 x64** uma vez. O runtime e seu instalador não acompanham o pacote. O SDK abaixo só é necessário para editar/compilar localmente.
 
 ## 1. Instale as ferramentas
 
@@ -79,7 +79,7 @@ Use texto descartável no Bloco de Notas, nunca um documento importante.
 - [ ] Feche pelo X, reabra pela bandeja e finalize por Sair.
 - [ ] Reabra: idiomas/atalho/consentimento persistem; substituição volta desativada.
 - [ ] Teste `compact` em PC com Desktop Runtime 10, mas sem SDK.
-- [ ] Teste `portable` em PC sem SDK e sem Runtime instalado.
+- [ ] Em PC sem Desktop Runtime 10, confirme que a documentação indica claramente o pré-requisito e a instalação permite abrir o aplicativo.
 - [ ] Sem consentimento, selecionar texto não mostra sugestões nem gera requisições.
 - [ ] Configure Inglês → Português, autorize e ative sugestões. Selecione uma frase no Bloco de Notas e em um navegador: em aplicativos compatíveis, um botão aparece sem roubar foco.
 - [ ] Clicar na sugestão mostra o resultado, sem tocar no documento ou clipboard, mesmo com substituição marcada.
@@ -101,30 +101,24 @@ O script de exportação tem testes automatizados (`python -m unittest discover 
 dotnet publish src/F8Translate/F8Translate.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o artifacts/compact
 ```
 
-**Portátil comprimido** — inclui o runtime, não exige instalação separada:
+O arquivo principal é `F8Translate.exe` dentro da pasta escolhida. Distribua a pasta completa, com as instruções de `docs/PACOTE-COMPACTO.txt`. Para ARM64, troque `win-x64` por `win-arm64` e use outra pasta de saída. Os pacotes do Actions são apenas x64.
 
-```powershell
-dotnet publish src/F8Translate/F8Translate.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o artifacts/portable
-```
-
-O arquivo principal é `F8Translate.exe` dentro da pasta escolhida. Distribua a pasta completa, com as instruções correspondentes de `docs/PACOTE-*.txt`. Para ARM64, troque `win-x64` por `win-arm64` e use outra pasta de saída. Os pacotes do Actions são apenas x64.
-
-Não habilite trimming/NativeAOT: Windows Forms/UI Automation dependem de recursos que exigem cuidado e não são um alvo apropriado para uma simples troca de flags. A versão compacta economiza repetição do runtime; a portátil comprimida economiza transferência, mas extrai componentes e pode demorar mais no início. Não é instalador/MSI. Símbolos de depuração não são publicados.
+Não habilite trimming/NativeAOT: Windows Forms/UI Automation dependem de recursos que exigem cuidado e não são um alvo apropriado para uma simples troca de flags. A distribuição é somente framework-dependent: não inclua o runtime nem seu instalador. O usuário instala Desktop Runtime 10 x64 separadamente. Não é instalador/MSI. Símbolos de depuração não são publicados.
 
 O SmartScreen pode alertar porque o aplicativo é novo e não tem assinatura. Não instrua usuários a desativar o antivírus; antes de distribuir amplamente, planeje assinatura de código, uma release verificável e testes em máquina limpa.
 
 ## 6. Downloads temporários no GitHub
 
-O workflow publica compacto, portátil e fontes com validade de **7 dias**. Não commite ZIPs nem executáveis. Para uma entrega só de documentação, que não dispara o build, use **Actions → Build Windows → Run workflow** na branch da sessão se precisar de novos pacotes.
+O workflow publica apenas compacto e fontes com validade de **7 dias**. Não commite ZIPs nem executáveis. Para uma entrega só de documentação, que não dispara o build, use **Actions → Build Windows → Run workflow** na branch da sessão se precisar de novos pacotes.
 
-Mudanças de código/empacotamento disparam build. Execuções anteriores da mesma branch são canceladas e o build tem timeout de dez minutos. Depois dele, um job isolado (até dois minutos) tenta apagar pacotes anteriores da mesma branch e workflow, apenas quando os três atuais existem. Outras branches/workflows são preservados. Se a limpeza falhar por permissão, confira o aviso no Actions; a retenção de sete dias dos pacotes novos continua válida. Não há cache nem agendamento. O arquivo já baixado não expira no PC. Essas medidas reduzem uso, mas limites/cobrança da conta precisam ser conferidos nas configurações do GitHub; não há garantia de uso infinito.
+Mudanças de código/empacotamento disparam build. Execuções anteriores da mesma branch são canceladas e o build tem timeout de dez minutos. Depois dele, um job isolado (até dois minutos) tenta apagar pacotes anteriores da mesma branch e workflow, apenas quando os dois atuais existem. Outras branches/workflows são preservados. Se a limpeza falhar por permissão, confira o aviso no Actions; a retenção de sete dias dos pacotes novos continua válida. Não há cache nem agendamento. O arquivo já baixado não expira no PC. Essas medidas reduzem uso, mas limites/cobrança da conta precisam ser conferidos nas configurações do GitHub; não há garantia de uso infinito.
 
 ## Problemas comuns
 
 - **F8 não funciona:** confira consentimento, clique em Salvar e ativar, verifique se está pausado e teste outro atalho. Alguns teclados exigem Fn+F8.
 - **Não copia/cola em determinado programa:** teste no Bloco de Notas. Programas elevados ou que interceptam atalhos podem bloquear a automação.
 - **Sugestão não aparece:** confirme consentimento e sugestões ativados e salvos, selecione um trecho curto e aguarde. Não há suporte universal; use F8 como alternativa. A origem é configurada, não detectada.
-- **Compacto pede .NET:** instale Desktop Runtime 10 x64 ou escolha o pacote portátil.
+- **Compacto pede .NET:** instale o **.NET Desktop Runtime 10 x64**, obrigatório e distribuído separadamente.
 - **Clipboard ocupado:** feche ferramentas de clipboard conflitantes e tente novamente.
 - **Tradução recusada:** verifique internet, tamanho do trecho e cotas do MyMemory.
 - **Quero zerar configurações:** saia pela bandeja e exclua `%LOCALAPPDATA%\F8Translate\settings.json`.
