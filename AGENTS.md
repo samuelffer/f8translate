@@ -1,49 +1,56 @@
 # AGENTS.md — como trabalhar neste repositório
 
-Leia este arquivo antes de alterar o projeto. Estas regras preservam o fluxo de entrega combinado com o usuário entre sessões.
+Leia antes de qualquer alteração. Comunicação e documentação em português (Brasil).
 
 ## Projeto
 
-**F8 Translate** é um aplicativo Windows em C# / .NET 10 / Windows Forms. Traduz texto selecionado por atalho global, com bandeja do sistema e integração com o clipboard. Comunicação e documentação em português (Brasil).
+F8 Translate: C# / .NET 10 / Windows Forms, exclusivo para Windows. UI Automation é usada apenas para observar seleções localmente em aplicativos compatíveis; não há OCR nem reconhecimento automático de idioma.
 
-- `src/F8Translate/`: aplicativo e projeto .NET.
-- `docs/DESENVOLVIMENTO.md`: preparar Windows, executar, testar e publicar executável.
-- `scripts/build_zip.py`: exportação dos fontes, com biblioteca padrão do Python.
-- `.github/workflows/build.yml`: compilação/publicação em Windows.
+- `src/F8Translate/`: aplicativo.
+- `docs/DESENVOLVIMENTO.md`: preparar Windows, executar, testar e publicar.
+- `scripts/build_zip.py`: exportar fontes completos (Python padrão, apenas para o mantenedor/CI).
+- `.github/workflows/build.yml`: publicar compacto, portátil e fontes, com retenção de 7 dias.
 
-## Fluxo obrigatório para cada entrega com alterações
+## Fluxo obrigatório de entrega
 
-1. Faça e verifique as alterações na **branch da sessão Arena**. Nesta sessão: `arena/91c71699-f8translate`. Nunca troque de branch para entregar arquivos.
-2. Atualize a documentação pertinente e explique o que foi realmente testado. Não afirme ter compilado ou testado no Windows sem fazê-lo.
-3. Gere **um ZIP novo ao concluir cada pedido com modificações**, depois de todas as edições:
+1. Trabalhe somente na branch da sessão Arena (`arena/91c71699-f8translate` nesta sessão). Nunca troque de branch.
+2. Atualize documentação e verifique as alterações. Diferencie compilação, revisão e teste real no Windows.
+3. Gere um ZIP local novo após concluir todas as modificações:
    ```bash
    python3 scripts/build_zip.py
    ```
-   No Windows, o mantenedor pode usar `py scripts/build_zip.py`. Python é ferramenta de exportação, não dependência do aplicativo C#.
-4. O ZIP fica em `zips/f8translate-source-AAAAMMDD-rN.zip`. Nunca sobrescreva nem apague pacotes anteriores. A revisão é automática e não altera a versão do aplicativo. Só altere a versão quando o usuário pedir explicitamente.
-5. Confira a integridade e o conteúdo. O pacote deve conter **todos os arquivos de projeto necessários**, incluindo fontes, documentação, assets, scripts, arquivos ocultos de configuração e este `AGENTS.md`, diretamente na raiz, sem pasta intermediária. Não inclua `.git`, ZIPs anteriores, builds, caches, dependências locais, credenciais ou arquivos pessoais. O script usa arquivos rastreados e novos não ignorados pelo Git; revise a lista antes de publicar.
-6. Commite e envie **código e ZIP juntos**, exclusivamente para a branch da sessão:
+   No Windows: `py scripts/build_zip.py`. O arquivo `zips/f8translate-source-AAAAMMDD-rN.zip` não sobrescreve anteriores. Versão do app só muda por pedido explícito.
+4. Verifique integridade e conteúdo. Fontes, documentação, assets, scripts e configurações (incluindo arquivos ocultos) devem estar na raiz. Não exporte credenciais, builds, caches, `.git` ou ZIPs antigos.
+5. Commite o código, **não os ZIPs nem executáveis**, e envie apenas para a branch da sessão:
    ```bash
    git add -A
-   git add -f zips/<novo-pacote>.zip
    git commit -m "Descrição da entrega"
    git push origin arena/91c71699-f8translate
    ```
-   O nome acima corresponde a esta sessão; em outra sessão use apenas a branch Arena autorizada nela. `zips/` fica ignorado; force a adição somente do pacote novo.
-7. Entregue o link de download do ZIP no GitHub e um resumo curto. Se o push falhar, informe e disponibilize o arquivo local; não diga que publicou.
+6. Confira o workflow e entregue os links dos artefatos. O Actions gera três downloads com validade de **7 dias**: fontes completos, aplicativo compacto e portátil. Não faça promessas de download antes da conclusão bem-sucedida.
+7. Mudanças só em documentação não disparam compilação: se precisar de um novo pacote para uma entrega, execute manualmente `gh workflow run build.yml --ref arena/91c71699-f8translate` e acompanhe o resultado. Não dispare builds duplicados.
+8. Se o GitHub falhar, informe e ofereça o ZIP local. Nunca diga que publicou sem confirmar.
 
-## Papel do GitHub e do ZIP
+## Armazenamento e limites
 
-A branch da sessão é a ponte de download. O usuário baixa o pacote e copia os arquivos manualmente para a `main`. **Não faça push na `main`, não abra PR, não faça merge e não crie releases sem pedido explícito.** Os ZIPs de teste não devem ser copiados para a `main`.
+Este fluxo substitui o combinado antigo de commitar ZIPs: agora todos os pacotes são artefatos temporários. Nunca adicione novos ZIPs ao Git com `-f`. O pacote antigo ainda existe no histórico; não reescreva esse histórico sem autorização explícita.
 
-O pacote contém **fontes**, não um executável compilado. O usuário compila seguindo o guia. Não chame o ZIP de instalador nem prometa que ele funciona sem .NET SDK para compilação.
+Use `retention-days: 7`, limite de tempo, cancelamento de execuções antigas e apenas runners hospedados padrão. Não adicione caches grandes, tarefas agendadas ou pipelines desnecessários. Não abra PR, faça merge, crie release ou envie para `main` sem pedido explícito. O usuário copia manualmente os fontes para a main, sem a pasta `zips/`.
 
-Ao atualizar uma cópia existente, verifique também arquivos removidos: extrair um ZIP por cima não apaga arquivos obsoletos. Prefira uma pasta limpa. Nesta migração, `requirements.txt` foi removido; o antigo `iniciar.bat`, se existir na máquina do usuário, também não é mais usado.
+Retenção reduz acúmulo, mas não garante uso ilimitado nem controla a cobrança da conta. Não altere permissões ou orçamento da conta sem autorização. Artefatos já existentes podem exigir limpeza própria; nunca apague releases ou arquivos do usuário por engano.
+
+## Distribuição
+
+- Compacto: framework-dependent; requer .NET Desktop Runtime 10 x64 instalado uma vez.
+- Portátil: self-contained, single-file comprimido; inclui runtime, é maior e extrai componentes temporários. Não prometa reduzir o espaço extraído ao tamanho comprimido.
+- Não use trimming/NativeAOT com Windows Forms/UI Automation sem suporte e validação apropriados.
+- Fontes: não são instalador. Extrair em pasta limpa; ZIP não apaga arquivos obsoletos.
 
 ## Cuidados técnicos
 
-- Não registre nem versione textos traduzidos, clipboard ou segredos.
-- Preserve o consentimento para envio de texto ao provedor externo.
-- Modo de substituição deve permanecer opcional; cuidado com foco, clipboard e operações simultâneas.
-- Não prometa compatibilidade universal com aplicativos. Teste com texto descartável.
+- Não registre textos, clipboard ou segredos. Seleções só vão para a rede após clique ou atalho e consentimento.
+- Sugestões devem ser opcionais, não roubar foco e não simular Ctrl+C durante a observação.
+- Campos de senha não devem gerar sugestões. Não prometa suporte universal; F8 é o fallback.
+- Substituição é opcional e desativada ao abrir. Sugestões nunca substituem documentos.
+- Fechar no X mantém o app na bandeja; Sair encerra explicitamente. Não impedir encerramento do Windows.
 - Não edite o mesmo arquivo em chamadas paralelas.

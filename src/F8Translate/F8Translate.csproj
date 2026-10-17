@@ -3,6 +3,10 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
+    <!-- UI Automation permite ler seleções sem simular Ctrl+C. -->
+    <UseWPF>true</UseWPF>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>

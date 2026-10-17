@@ -1,0 +1,24 @@
+F8 Translate — portátil — Windows x64
+
+Não requer instalação de Python, SDK ou .NET Runtime.
+Extraia o ZIP em uma pasta e abra F8Translate.exe.
+Escolha os idiomas, permita a tradução online e clique em Salvar e ativar.
+
+O runtime está incluído e comprimido. O primeiro início pode demorar mais;
+componentes serão extraídos pelo .NET em uma pasta temporária do usuário.
+O tamanho baixado é menor, mas a extração ainda ocupa espaço no disco.
+Para o menor executável, use o pacote compact e instale Desktop Runtime 10 uma vez.
+
+Fechar no X mantém o app ativo na bandeja. Para encerrar, clique no ícone
+com o botão direito e escolha Sair. O Windows pode esconder o ícone em ^.
+
+Sugestões: selecione texto e aguarde cerca de 1 segundo. Nos aplicativos
+compatíveis aparece um botão discreto; clique para traduzir. Não há envio
+automático. Se não aparecer, use F8. O idioma de origem é configurado,
+não detectado automaticamente. Não envie informações sensíveis.
+
+As configurações de uma instalação anterior são preservadas. Para ler em
+inglês, configure Inglês -> Português. Esta é a opção inicial em instalações novas.
+
+O pacote não é assinado digitalmente e ainda precisa de testes reais no seu PC.
+O download do Actions expira em 7 dias; o arquivo baixado continua funcionando.

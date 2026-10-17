@@ -1,10 +1,25 @@
 name: Build Windows
-on: [push, pull_request, workflow_dispatch]
+
+on:
+  push:
+    paths:
+      - 'src/**'
+      - 'scripts/build_zip.py'
+      - '.github/workflows/build.yml'
+  workflow_dispatch:
+
 permissions:
   contents: read
+
+# Uma atualização nova substitui a compilação anterior da mesma branch.
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -12,9 +27,47 @@ jobs:
           dotnet-version: '10.0.x'
       - name: Build
         run: dotnet build src/F8Translate/F8Translate.csproj -c Release
-      - name: Publish Windows x64
-        run: dotnet publish src/F8Translate/F8Translate.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o artifacts/win-x64
+      - name: Publicar versão compacta (requer Desktop Runtime 10)
+        run: dotnet publish src/F8Translate/F8Translate.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o artifacts/compact
+      - name: Publicar versão portátil comprimida (runtime incluído)
+        run: dotnet publish src/F8Translate/F8Translate.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o artifacts/portable
+      - name: Exportar fontes completos sem colocar ZIP no Git
+        shell: pwsh
+        run: |
+          python scripts/build_zip.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $zip = Get-ChildItem zips/f8translate-source-*.zip | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
+          Expand-Archive -Path $zip.FullName -DestinationPath artifacts/sources
+      - name: Incluir instruções em cada pacote
+        shell: pwsh
+        run: |
+          Copy-Item docs/PACOTE-COMPACTO.txt artifacts/compact/LEIA-ME.txt
+          Copy-Item docs/PACOTE-PORTATIL.txt artifacts/portable/LEIA-ME.txt
+          $rows = @('## Pacotes Windows x64', '', '| Pacote | Executável |', '| --- | ---: |')
+          foreach ($package in @('compact', 'portable')) {
+            $file = Get-Item "artifacts/$package/F8Translate.exe"
+            $size = '{0:N2} MB' -f ($file.Length / 1MB)
+            $rows += "| $package | $size |"
+          }
+          $rows += @('', 'Downloads expiram em 7 dias. Compacto requer .NET Desktop Runtime 10 x64; portátil inclui o runtime. Build não substitui teste manual em Windows.')
+          $rows | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
       - uses: actions/upload-artifact@v4
         with:
-          name: F8Translate-win-x64
-          path: artifacts/win-x64/
+          name: F8Translate-compact-win-x64
+          path: artifacts/compact/
+          retention-days: 7
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: F8Translate-portable-win-x64
+          path: artifacts/portable/
+          retention-days: 7
+          compression-level: 0
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: F8Translate-fontes
+          path: artifacts/sources/
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: error

@@ -1,0 +1,24 @@
+F8 Translate — compacto — Windows x64
+
+1. Instale UMA VEZ o .NET Desktop Runtime 10 para Windows x64:
+   https://dotnet.microsoft.com/download/dotnet/10.0
+   Escolha "Desktop Runtime", não apenas "Runtime" e não é necessário SDK.
+2. Extraia o ZIP em uma pasta e abra F8Translate.exe.
+3. Escolha os idiomas, permita a tradução online e clique em Salvar e ativar.
+
+O executável pequeno reutiliza o runtime instalado no computador.
+Se quiser usar sem instalar o runtime, baixe o pacote portable (maior).
+
+Fechar no X mantém o app ativo na bandeja. Para encerrar, clique no ícone
+com o botão direito e escolha Sair. O Windows pode esconder o ícone em ^.
+
+Sugestões: selecione texto e aguarde cerca de 1 segundo. Nos aplicativos
+compatíveis aparece um botão discreto; clique para traduzir. Não há envio
+automático. Se não aparecer, use F8. O idioma de origem é configurado,
+não detectado automaticamente. Não envie informações sensíveis.
+
+As configurações de uma instalação anterior são preservadas. Para ler em
+inglês, configure Inglês -> Português. Esta é a opção inicial em instalações novas.
+
+O pacote não é assinado digitalmente e ainda precisa de testes reais no seu PC.
+O download do Actions expira em 7 dias; o arquivo baixado continua funcionando.

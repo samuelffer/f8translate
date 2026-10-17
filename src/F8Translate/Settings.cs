@@ -4,10 +4,11 @@ namespace F8Translate;
 
 internal sealed class Settings
 {
-    public string Source { get; set; } = "pt";
-    public string Target { get; set; } = "en";
+    public string Source { get; set; } = "en";
+    public string Target { get; set; } = "pt";
     public string Hotkey { get; set; } = "F8";
     public bool Consent { get; set; }
+    public bool Suggestions { get; set; } = true;
     // Replacement intentionally defaults to off every session.
     private static string FilePath => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "F8Translate", "settings.json");
